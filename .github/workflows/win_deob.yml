@@ -1,0 +1,33 @@
+name: Windows Deobfuscate Luraph10
+on: [push, workflow_dispatch]
+jobs:
+  deobfuscate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install and Deobfuscate
+        shell: bash
+        run: |
+          npm install
+          mkdir -p sonuclar
+          echo "=== Detect ==="
+          node deob.js --detect loadstring_Luraph_10.lua || true
+          echo "=== Deobfuscate ==="
+          node --max-old-space-size=8192 deob.js \
+            --plugin luraph_v15 \
+            --timeout 900 \
+            --budget 900 \
+            -o sonuclar/cozulmus.lua \
+            loadstring_Luraph_10.lua 2>&1 | tee sonuclar/log.txt || true
+          ls -lh output/ || true
+          cp -rf output/* sonuclar/ 2>/dev/null || true
+          ls -la sonuclar/
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: luraph10-sonuc
+          path: sonuclar/
